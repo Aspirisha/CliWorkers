@@ -109,6 +109,7 @@ void Cli::printStatus(QStringList status) {
 void Cli::printHelp() {
     QTextStream cout(stdout);
     cout << "help\t print this help" << endl;
+    cout << "status\t print status for each worker" << endl;
     cout << "pause <id>\t pause worker with number <id>" << endl;
     cout << "resume <id>\t resume worker with number <id>" << endl;
     cout << "stop <id>\t stop worker with number <id>" << endl;
