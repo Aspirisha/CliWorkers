@@ -3,6 +3,7 @@
 #include <random>
 #include "Worker.h"
 
+class QNetworkAccessManager;
 class QNetworkReply;
 class QTimer;
 
@@ -27,4 +28,5 @@ private:
     bool waiting_for_reply = false;
     int interval;
     static const QString quoteServerName;
+    QNetworkAccessManager *manager;
 };

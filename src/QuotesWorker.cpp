@@ -15,6 +15,8 @@ QuotesWorker::QuotesWorker(int request_interval_millis) : interval(request_inter
     randomGen(std::chrono::system_clock::now().time_since_epoch().count()){
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &QuotesWorker::run);
+    manager = new QNetworkAccessManager(this);
+    QObject::connect(manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(replyFinished(QNetworkReply *)));
 }
 
 void QuotesWorker::run() {
@@ -28,15 +30,12 @@ void QuotesWorker::run() {
     if (waiting_for_reply) return;
     emit processingStepChanged("Requesting quote server");
     QUrl url(quoteServerName);
-    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-    QObject::connect(manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(replyFinished(QNetworkReply *)));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     QUrlQuery params;
     params.addQueryItem("method", "getQuote");
     params.addQueryItem("lang", "en");
-    
-    
+   
     std::uniform_int_distribution<int> distribution(1, 100000);
     params.addQueryItem("key", QString::number(distribution(randomGen)));
 
