@@ -49,6 +49,8 @@ void Cli::processUserInput(QString command) {
                 worker_manager->resume(id);
             } else if (regex.cap(1) == "stop") {
                 worker_manager->stop(id);
+            } else {
+                cout << "Unknown command: " << regex.cap(1) << endl;
             }
         }
     }
