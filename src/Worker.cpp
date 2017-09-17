@@ -7,7 +7,6 @@ void Worker::start() {
 }
 
 void Worker::pause() {
-    std::cout << "pausing" << std::endl;
     mutex.lock();
     emit state_changed(State::PAUSED);
     resume_condition.wait(&mutex);

@@ -1,5 +1,4 @@
 #include <QThread>
-#include <iostream>
 #include "WorkerManager.h"
 
 WorkerManager::WorkerManager(const QVector<Worker*> &workers) : workers(workers) {

@@ -4,7 +4,7 @@
 #include <QUrlQuery>
 #include <QThread>
 #include <QDomDocument>
-#include <iostream>
+#include <QTextStream>
 #include <Qtimer>
 #include <random>
 #include <chrono>
@@ -60,6 +60,7 @@ void QuotesWorker::replyFinished(QNetworkReply *reply) {
 void QuotesWorker::command(QString command) {
     QStringList command_parts = command.split(" ", QString::SkipEmptyParts);
 
+    QTextStream out(stdout);
     if (command_parts.size() != 2 || command_parts.at(0) != "interval") return;
 
     bool ok;

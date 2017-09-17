@@ -1,4 +1,4 @@
-#include <iostream>
+#include <QTextStream>
 #include "WorkerManager.h"
 #include "ConsoleReader.h"
 #include "QuotesWorker.h"
@@ -17,8 +17,9 @@ Cli::Cli(QObject *parent) : QObject(parent) {
 
 
 void Cli::run() {
-    std::cout << "Welcome to workers cli!" << std::endl;
-    std::cout << "> " << std::flush;
+    QTextStream cout(stdout);
+    cout << "Welcome to workers cli!" << endl;
+    cout << "> " << flush;
     worker_manager->start();
     reader_thread->start();
     QMetaObject::invokeMethod(console_reader, "run", Qt::QueuedConnection);
@@ -29,8 +30,6 @@ void Cli::processUserInput(QString command) {
     //QRegExp regex("pause 1");
     int pos;
     if ((pos = regex.indexIn(command, 0)) != -1) {
-        std::cout << regex.cap(1).toStdString() << std::endl;
-        std::cout << regex.cap(2).toStdString() << std::endl;
         bool ok;
         int id = regex.cap(2).toInt(&ok);
         if (!ok) {
@@ -47,15 +46,18 @@ void Cli::processUserInput(QString command) {
             worker_manager->stop(id);
         }
     }
-    std::cout << "> " << std::flush;
+    QTextStream cout(stdout);
+    cout << "> " << flush;
 }
 
 void Cli::onMessage(int id, QString msg) {
-    std::cout << "[thread-" << id << "]: " << msg.toStdString() << "\n> " << std::flush;
+    QTextStream cout(stdout);
+    cout << "[thread-" << id << "]: " << msg << "\n> " << flush;
 }
 
 void Cli::exitRequest() {
-    std::cout << "Good bye!" << std::endl;
+    QTextStream cout(stdout);
+    cout << "Good bye!" << endl;
     worker_manager->stopAll();
     emit finished();
 }
