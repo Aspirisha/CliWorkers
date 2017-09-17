@@ -1,4 +1,5 @@
 #include <QTextStream>
+#include <QSet>
 #include "WorkerManager.h"
 #include "ConsoleReader.h"
 #include "QuotesWorker.h"
@@ -48,13 +49,22 @@ void Cli::run() {
 }
 
 void Cli::processUserInput(QString command) {
+    static QSet<QString> knownCommands = {
+        "status", "help", "pause", "resume", "commands", "command", "stop"
+    };
+
     QRegExp regex("\\s*(\\w+)(\\s+([1-9][0-9]*))?");
     int pos;
     QTextStream cout(stdout);
     if ((pos = regex.indexIn(command, 0)) != -1) {
         if (regex.captureCount() == 3) {
+            if (!knownCommands.contains(regex.cap(1))) {
+                cout << "Unknown command: " << regex.cap(1) << "\n> " << flush;
+                return;
+            }
             bool ok;
             int id = regex.cap(3).toInt(&ok);
+   
             if (regex.cap(1) == "status") {
                 worker_manager->status();
             } else if (regex.cap(1) == "help") {
@@ -70,11 +80,9 @@ void Cli::processUserInput(QString command) {
                     worker_manager->resume(id);
                 } else if (regex.cap(1) == "stop") {
                     worker_manager->stop(id);
-                } else {
-                    cout << "Unknown command: " << regex.cap(1) << endl;
-                }
+                } 
             } else {
-                cout << "Couldn't parse worker id: " << regex.cap(3) << endl;
+                cout << "Couldn't parse worker id" << endl;
             }
         }
     }
