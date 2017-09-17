@@ -1,4 +1,3 @@
-int main(int argc, char **argv) {
-	
-	return 0;
-}
+#include <QtTest>
+#include "FractalWorkerTest.h"
+QTEST_MAIN(FractalWorkerTest)

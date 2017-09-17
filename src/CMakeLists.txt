@@ -1,4 +1,4 @@
-set(SOURCES main.cpp Worker.cpp Cli.cpp WorkerManager.cpp QuotesWorker.cpp ConsoleReader.cpp FractalWorker.cpp)
+set(SOURCES Worker.cpp Cli.cpp WorkerManager.cpp QuotesWorker.cpp ConsoleReader.cpp FractalWorker.cpp)
 set(HEADERS Worker.h Cli.h WorkerManager.h QuotesWorker.h ConsoleReader.h FractalWorker.h)
 
 # Tell CMake to run moc when necessary:
@@ -13,5 +13,8 @@ find_package(Qt5Core REQUIRED)
 find_package(Qt5Network REQUIRED)
 find_package(Qt5Xml REQUIRED)
 
-add_executable(cliworkers ${SOURCES} ${HEADERS})
-qt5_use_modules(cliworkers Core Network Xml)
+add_library(cliworkerslib ${SOURCES} ${HEADERS})
+qt5_use_modules(cliworkerslib Core Network Xml)
+
+add_executable(cliworkers main.cpp)
+target_link_libraries(cliworkers cliworkerslib)

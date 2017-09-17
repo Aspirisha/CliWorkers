@@ -18,9 +18,12 @@ private slots:
     void printStatus(QStringList status);
     void workerManagerError(QString msg);
     void workerError(int id, QString msg);
+    void printWorkerCommands(int id, QStringList commands);
 signals:
     void finished();
 private:
+    void printHelp();
+
     WorkerManager *worker_manager;
     ConsoleReader *console_reader;
     QThread* reader_thread;

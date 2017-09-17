@@ -20,7 +20,7 @@ QuotesWorker::QuotesWorker(int request_interval_millis) : interval(request_inter
 void QuotesWorker::run() {
     if (stopped) {
         emit processingStepChanged("Stopped");
-        on_finish();
+        onFinish();
         return;
     }
 
@@ -57,7 +57,7 @@ void QuotesWorker::replyFinished(QNetworkReply *reply) {
     if (!quote.isEmpty() && !author.isEmpty()) {
         QString text = quote.at(0).firstChild().nodeValue();
         QString author_name = author.at(0).firstChild().nodeValue();
-        emit message(QString("[QuotesWorker]: \"%1\", %2").arg(text).arg(author_name));
+        emit message(QString("\"%1\", %2").arg(text).arg(author_name));
     }
     waiting_for_reply = false;
 }
@@ -65,14 +65,34 @@ void QuotesWorker::replyFinished(QNetworkReply *reply) {
 void QuotesWorker::command(QString command) {
     QStringList commandParts = command.split(" ", QString::SkipEmptyParts);
 
+    if (commandParts.size() == 1 && commandParts.at(0) == "interval") {
+        return emit message(QString("Current request interval is %1").arg(interval));
+    }
+
     if (commandParts.size() != 2 || commandParts.at(0) != "interval") return;
 
     bool ok;
     int interval = commandParts.at(1).toInt(&ok);
-    if (!ok || interval < 1000) {
-        emit message(QString("[QuotesWorker]: Interval %1 is too small").arg(interval));
-        return;
+   
+    if (!ok) {
+        return emit message(QString("Couldn't parse sleep interval: %1").arg(commandParts.at(1)));
+    }
+
+    if (interval < minRequestInterval) {
+        return emit message(QString("Interval %1 is too small: should be at least %2")
+            .arg(interval).arg(minRequestInterval));
     }
 
     this->interval = interval;
+}
+
+void QuotesWorker::commands() {
+    QStringList commandParts;
+    commandParts << "interval <N>\t request quote server for the new quote every <N> milliseconds";
+    commandParts << "interval\t get current request interval in milliseconds";
+    emit commandsReply(commandParts);
+}
+
+QString QuotesWorker::getName() const {
+    return "QuotesWorker";
 }

@@ -29,11 +29,13 @@ public:
     void status() const;
     void start();
     void stopAll();
+    void commands(int id) const;
 signals:
-    void error(QString e);
+    void error(QString e) const;
     void error(int id, QString msg);
     void message(int id, QString msg);
     void statusReply(QStringList) const;
+    void workerCommands(int id, QStringList commands) const;
 private:
     QVector<WorkerDescriptor> workers;
 };

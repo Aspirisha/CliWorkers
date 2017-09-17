@@ -6,12 +6,14 @@
 class FractalWorker : public Worker {
     Q_OBJECT
 public:
-    FractalWorker(QString outputDirectory = defaultPath, int iterationsNumber = 100000, int writingFrequency = 5000, 
+    FractalWorker(QString outputDirectory = defaultPath, int iterationsNumber = 1000000, int writingFrequency = 5000, 
         int loopSleepMillis = 10, int width = int(defaultHeight / aspectRatio),
         int height = defaultHeight);
+    QString getName() const override;
 public slots:
     void run() override;
     void command(QString command) override;
+    void commands() override;
 public:
     static const QString defaultPath;
 private:

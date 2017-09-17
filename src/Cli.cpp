@@ -26,10 +26,11 @@ Cli::Cli(int threadsNum, QObject *parent) : QObject(parent) {
     reader_thread = new QThread;
     connect(worker_manager, &WorkerManager::message, this, &Cli::onMessage);
     connect(worker_manager, &WorkerManager::statusReply, this, &Cli::printStatus);
-    connect(worker_manager, static_cast<void (WorkerManager::*)(QString)>(&WorkerManager::error),
+    connect(worker_manager, static_cast<void (WorkerManager::*)(QString) const>(&WorkerManager::error),
         this, &Cli::workerManagerError);
     connect(worker_manager, static_cast<void (WorkerManager::*)(int, QString)>(&WorkerManager::error),
         this, &Cli::workerError);
+    connect(worker_manager, &WorkerManager::workerCommands, this, &Cli::printWorkerCommands);
     connect(console_reader, &ConsoleReader::exitRequest, this, &Cli::exitRequest);
     connect(console_reader, &ConsoleReader::gotLine, this, &Cli::processUserInput);
 
@@ -48,38 +49,36 @@ void Cli::run() {
 
 void Cli::processUserInput(QString command) {
     QRegExp regex("\\s*(\\w+)(\\s+([1-9][0-9]*))?");
-    //QRegExp regex("pause 1");
     int pos;
     QTextStream cout(stdout);
     if ((pos = regex.indexIn(command, 0)) != -1) {
         if (regex.captureCount() == 3) {
             bool ok;
             int id = regex.cap(3).toInt(&ok);
-            if (!ok && regex.cap(1) == "status") {
+            if (regex.cap(1) == "status") {
                 worker_manager->status();
-                cout << "> " << flush;
-                return;
-            }
-
-            if (regex.cap(1) == "command") {
-                worker_manager->command(id, command.mid(regex.cap(0).length()));
-            } else if (regex.cap(1) == "pause") {
-                worker_manager->pause(id);
-            } else if (regex.cap(1) == "resume") {
-                worker_manager->resume(id);
-            } else if (regex.cap(1) == "stop") {
-                worker_manager->stop(id);
+            } else if (regex.cap(1) == "help") {
+                printHelp();
+            } else if (ok) {
+                if (regex.cap(1) == "command") {
+                    worker_manager->command(id, command.mid(regex.cap(0).length()));
+                } else if (regex.cap(1) == "pause") {
+                    worker_manager->pause(id);
+                } else if (regex.cap(1) == "commands") {
+                    worker_manager->commands(id);
+                } else if (regex.cap(1) == "resume") {
+                    worker_manager->resume(id);
+                } else if (regex.cap(1) == "stop") {
+                    worker_manager->stop(id);
+                } else {
+                    cout << "Unknown command: " << regex.cap(1) << endl;
+                }
             } else {
-                cout << "Unknown command: " << regex.cap(1) << endl;
+                cout << "Couldn't parse worker id: " << regex.cap(3) << endl;
             }
         }
     }
     cout << "> " << flush;
-}
-
-void Cli::onMessage(int id, QString msg) {
-    QTextStream cout(stdout);
-    cout << "[thread-" << id << "]: " << msg << "\n> " << flush;
 }
 
 void Cli::exitRequest() {
@@ -99,12 +98,41 @@ void Cli::printStatus(QStringList status) {
     }
 }
 
+void Cli::printHelp() {
+    QTextStream cout(stdout);
+    cout << "help\t print this help" << endl;
+    cout << "pause <id>\t pause worker with number <id>" << endl;
+    cout << "resume <id>\t resume worker with number <id>" << endl;
+    cout << "stop <id>\t stop worker with number <id>" << endl;
+    cout << "command <id> <command>\t request worker number <id> to execute <command>" << endl;
+    cout << "commands <id>\t list worker-specfic commands for worker number <id>" << endl;
+    cout << "quit\t exit program" << endl;
+}
+
+//// Slots
+
+void Cli::onMessage(int id, QString msg) {
+    QTextStream cout(stdout);
+    cout << msg << "\n> " << flush;
+}
+
 void Cli::workerManagerError(QString msg) {
     QTextStream cout(stdout);
     cout << "[ERROR] " << msg << endl;
+    cout << "> " << flush;
 }
 
 void Cli::workerError(int id, QString msg) {
     QTextStream cout(stdout);
     cout << QString("[ERROR in thread-%1] ").arg(id) << msg << endl;
+    cout << "> " << flush;
+}
+
+void Cli::printWorkerCommands(int id, QStringList commands) {
+    QTextStream cout(stdout);
+    cout << "List of commands for worker-" << id << ":" << endl;
+    for (QString s : commands) {
+        cout << s << endl;
+    }
+    cout << "> " << flush;
 }

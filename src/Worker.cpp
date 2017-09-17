@@ -25,8 +25,9 @@ void Worker::stop() {
     stopped = true;
 }
 
-void Worker::on_finish() {
-    stopped ? emit stateChanged(State::FINISHED) : emit stateChanged(State::STOPPED);
+void Worker::onFinish() {
+    stopped ? emit stateChanged(State::STOPPED) : emit stateChanged(State::FINISHED);
+    emit finished();
 }
 
 void Worker::command(QString command) {}

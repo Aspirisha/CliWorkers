@@ -24,7 +24,7 @@ void FractalWorker::run() {
     if (!QDir().mkpath(outputDirectory)) {
         stopped = true;
         emit error(QString("Couldn't create output directories: %1").arg(outputDirectory));
-        on_finish();
+        onFinish();
         return;
     }
     double x = 0;
@@ -79,7 +79,7 @@ void FractalWorker::run() {
         }
     }
 
-    on_finish();
+    onFinish();
 }
 
 std::pair<int, int> FractalWorker::convertPointToPixel(double x, double y) {
@@ -96,12 +96,30 @@ std::pair<int, int> FractalWorker::convertPointToPixel(double x, double y) {
 void FractalWorker::command(QString command) {
     QStringList commandParts = command.split(" ", QString::SkipEmptyParts);
 
+    if (commandParts.size() == 1 && commandParts.at(0) == "interval") {
+        return emit message(QString("Current sleep interval is %1").arg(loopSleepMillis));
+    }
+
     if (commandParts.size() != 2 || commandParts.at(0) != "sleep") return;
     bool ok;
     int interval = commandParts.at(1).toInt(&ok);
-    if (!ok || interval < 0) {
-        emit message(QString("[FractalWorker]: Interval %1 is too small").arg(interval));
-        return;
+    if (!ok) {
+        return emit message(QString("Couldn't parse sleep interval: %1").arg(commandParts.at(1)));
+    }
+
+    if (interval < 0) {
+        return emit message(QString("Interval %1 is too small").arg(interval));
     }
     loopSleepMillis = interval;
+}
+
+void FractalWorker::commands() {
+    QStringList commandParts;
+    commandParts << "sleep <N>\t sleep for <N> milliseconds after each iteration";
+    commandParts << "interval\t get current sleep interval in milliseconds";
+    emit commandsReply(commandParts);
+}
+
+QString FractalWorker::getName() const {
+    return "FractalWorker";
 }

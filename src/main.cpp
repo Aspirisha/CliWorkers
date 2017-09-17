@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
     QCoreApplication::setApplicationVersion("1.0");
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("Test helper");
+    parser.setApplicationDescription("Sample qt worker application.");
     parser.addHelpOption();
     parser.addVersionOption();
 
