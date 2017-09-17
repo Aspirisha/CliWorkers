@@ -66,6 +66,7 @@ void QuotesWorker::command(QString command) {
     bool ok;
     int interval = command_parts.at(1).toInt(&ok);
     if (!ok || interval < 1000) {
+        emit message(QString("[QuotesWorker]: Interval %1 is too small").arg(interval));
         return;
     }
 
