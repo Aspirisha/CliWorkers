@@ -1,15 +1,28 @@
 #include <QThread>
 #include "WorkerManager.h"
 
-WorkerManager::WorkerManager(const QVector<Worker*> &workers) : workers(workers) {
+WorkerManager::WorkerDescriptor::WorkerDescriptor(Worker *w, Worker::State state)
+    : worker(w), state(state), thread(new QThread) {
+    if (worker) {
+        worker->moveToThread(thread.data());
+    }
+}
+
+WorkerManager::WorkerManager(const QVector<Worker*> &workers) {
     for (int id = 1; id <= workers.size(); id++) {
-        QThread *t = new QThread(this);
         Worker *w = workers[id - 1];
-        w->moveToThread(t);
-        worker_threads.push_back(t);
         connect(w, &Worker::message, [this, id](QString msg) {
             emit this->message(id, msg);
         });
+
+        connect(w, &Worker::stateChanged, [this, id](Worker::State newState) {
+            this->workers[id - 1].state = newState;
+        });
+
+        connect(w, &Worker::processingStepChanged, [this, id](QString newStep) {
+            this->workers[id - 1].processingStepDescription = newStep;
+        });
+        this->workers.push_back(w);
     }
 }
 
@@ -18,7 +31,7 @@ void WorkerManager::pause(int id) {
         emit error(QString("Can't pause thread %1: no thread with such id.").arg(id));
         return;
     }
-    QMetaObject::invokeMethod(workers[id - 1], "pause", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(workers[id - 1].worker, "pause", Qt::QueuedConnection);
 }
 
 void WorkerManager::stop(int id) {
@@ -26,7 +39,7 @@ void WorkerManager::stop(int id) {
         emit error(QString("Can't stop thread %1: no thread with such id.").arg(id));
         return;
     }
-    QMetaObject::invokeMethod(workers[id - 1], "stop", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(workers[id - 1].worker, "stop", Qt::QueuedConnection);
 }
 
 void WorkerManager::resume(int id) {
@@ -34,22 +47,22 @@ void WorkerManager::resume(int id) {
         emit error(QString("Can't resume thread %1: no thread with such id.").arg(id));
         return;
     }
-    workers[id - 1]->resume();
+    workers[id - 1].worker->resume();
 }
 
 void WorkerManager::start() {
     for (int i = 0; i < workers.size(); i++) {
-        worker_threads[i]->start();
-        QMetaObject::invokeMethod(workers[i], "run", Qt::QueuedConnection);
+        workers[i].thread->start();
+        QMetaObject::invokeMethod(workers[i].worker, "start", Qt::QueuedConnection);
     }
 }
 
 void WorkerManager::stopAll() {
-    for (QThread *t : worker_threads) {
-        t->quit();
-        t->wait(1000); 
-        if (!t->isFinished()) {
-            t->terminate();
+    for (WorkerDescriptor &wd : workers) {
+        wd.thread->quit();
+        wd.thread->wait(1000);
+        if (!wd.thread->isFinished()) {
+            wd.thread->terminate();
         }
     }
 }
@@ -59,5 +72,14 @@ void WorkerManager::command(int id, QString command) {
         emit error(QString("Can't send command to thread %1: no thread with such id.").arg(id));
         return;
     }
-    workers[id - 1]->command(command);
+    workers[id - 1].worker->command(command);
+}
+
+void WorkerManager::status() const {
+    QStringList statuses;
+    for (int i = 0; i < workers.size(); i++) {
+        statuses << QString("%1\t%2\t%3").arg(i + 1).arg(Worker::stateToStr[workers[i].state])
+            .arg(workers[i].processingStepDescription);
+    }
+    emit statusReply(statuses);
 }

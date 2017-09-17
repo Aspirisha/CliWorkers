@@ -15,6 +15,7 @@ public slots :
 private slots:
     void processUserInput(QString line);
     void exitRequest();
+    void printStatus(QStringList status);
 signals:
     void finished();
 private:

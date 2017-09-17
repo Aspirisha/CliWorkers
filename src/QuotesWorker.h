@@ -8,7 +8,7 @@ class QTimer;
 class QuotesWorker : public Worker {
     Q_OBJECT
 public:
-    QuotesWorker(int request_interval_millis = 10000);
+    QuotesWorker(int requestIntervalMillis = 10000);
 public slots:
     void command(QString command);
 protected:
@@ -19,4 +19,5 @@ private:
     QTimer *timer = nullptr;
     bool waiting_for_reply = false;
     int interval;
+    static const QString quoteServerName;
 };

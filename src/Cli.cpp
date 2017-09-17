@@ -8,7 +8,8 @@ Cli::Cli(QObject *parent) : QObject(parent) {
     worker_manager = new WorkerManager({new QuotesWorker});
     console_reader = new ConsoleReader;
     reader_thread = new QThread;
-    connect(worker_manager, &WorkerManager::message, this, &Cli::onMessage, Qt::QueuedConnection);
+    connect(worker_manager, &WorkerManager::message, this, &Cli::onMessage);
+    connect(worker_manager, &WorkerManager::statusReply, this, &Cli::printStatus);
     connect(console_reader, &ConsoleReader::exitRequest, this, &Cli::exitRequest);
     connect(console_reader, &ConsoleReader::gotLine, this, &Cli::processUserInput);
 
@@ -26,27 +27,31 @@ void Cli::run() {
 }
 
 void Cli::processUserInput(QString command) {
-    QRegExp regex("\\s*(\\w+)\\s+([1-9][0-9]*)");
+    QRegExp regex("\\s*(\\w+)(\\s+([1-9][0-9]*))?");
     //QRegExp regex("pause 1");
     int pos;
+    QTextStream cout(stdout);
     if ((pos = regex.indexIn(command, 0)) != -1) {
-        bool ok;
-        int id = regex.cap(2).toInt(&ok);
-        if (!ok) {
-            return;
-        }
+        if (regex.captureCount() == 3) {
+            bool ok;
+            int id = regex.cap(3).toInt(&ok);
+            if (!ok && regex.cap(1) == "status") {
+                worker_manager->status();
+                cout << "> " << flush;
+                return;
+            }
 
-        if (regex.cap(1) == "command") {
-            worker_manager->command(id, command.mid(regex.cap(0).length()));
-        } else if (regex.cap(1) == "pause") {
-            worker_manager->pause(id);
-        } else if (regex.cap(1) == "resume") {
-            worker_manager->resume(id);
-        } else if (regex.cap(1) == "stop") {
-            worker_manager->stop(id);
+            if (regex.cap(1) == "command") {
+                worker_manager->command(id, command.mid(regex.cap(0).length()));
+            } else if (regex.cap(1) == "pause") {
+                worker_manager->pause(id);
+            } else if (regex.cap(1) == "resume") {
+                worker_manager->resume(id);
+            } else if (regex.cap(1) == "stop") {
+                worker_manager->stop(id);
+            }
         }
     }
-    QTextStream cout(stdout);
     cout << "> " << flush;
 }
 
@@ -62,4 +67,12 @@ void Cli::exitRequest() {
     reader_thread->quit();
     reader_thread->wait();
     emit finished();
+}
+
+void Cli::printStatus(QStringList status) {
+    QTextStream cout(stdout);
+    cout << "[Worker #]\t[State]\t[Processing Step]\n";
+    for (QString s : status) {
+        cout << s << endl;
+    }
 }

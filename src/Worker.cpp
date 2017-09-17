@@ -1,16 +1,19 @@
-#include <iostream>
 #include "Worker.h"
+const QHash<Worker::State, QString> Worker::stateToStr = { 
+    { Worker::State::NOT_STARTED, "NOT_STARTED"},{ Worker::State::RUNNING, "RUNNING" },
+    { Worker::State::PAUSED, "PAUSED" },{ Worker::State::STOPPED, "STOPPED" },
+    { Worker::State::FINISHED, "FINISHED" } };
 
 void Worker::start() {
-    emit state_changed(State::RUNNING);
+    emit stateChanged(State::RUNNING);
     run();
 }
 
 void Worker::pause() {
     mutex.lock();
-    emit state_changed(State::PAUSED);
+    emit stateChanged(State::PAUSED);
     resume_condition.wait(&mutex);
-    emit state_changed(State::RUNNING);
+    emit stateChanged(State::RUNNING);
     mutex.unlock();
 }
 
@@ -23,7 +26,7 @@ void Worker::stop() {
 }
 
 void Worker::on_finish() {
-    stopped ? emit state_changed(State::FINISHED) : emit state_changed(State::STOPPED);
+    stopped ? emit stateChanged(State::FINISHED) : emit stateChanged(State::STOPPED);
 }
 
 void Worker::command(QString command) {}

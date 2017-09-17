@@ -1,6 +1,7 @@
 #pragma once
 #include <QObject>
 #include <QMutex>
+#include <QHash>
 #include <QWaitCondition>
 
 class Worker : public QObject {
@@ -14,11 +15,14 @@ public:
         FINISHED
     };
 
+    static const QHash<State, QString> stateToStr;
+
     void resume(); // called externally
 signals:
     void finished();
     void error(QString err);
-    void state_changed(State new_state);
+    void stateChanged(State new_state);
+    void processingStepChanged(QString);
     void message(QString msg);
 public slots:
     void start();
@@ -32,3 +36,7 @@ protected:
     QMutex mutex;
     bool stopped = false;
 };
+
+inline uint qHash(Worker::State key, uint seed) {
+    return ::qHash(static_cast<uint>(key), seed);
+}

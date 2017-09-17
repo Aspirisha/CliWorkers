@@ -10,19 +10,24 @@
 #include <chrono>
 #include "QuotesWorker.h"
 
+const QString QuotesWorker::quoteServerName = "http://api.forismatic.com/api/1.0/";
+
 QuotesWorker::QuotesWorker(int request_interval_millis) : interval(request_interval_millis){
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &QuotesWorker::run);
 }
 
 void QuotesWorker::run() {
-    if (!stopped) {
-        timer->start(interval);
+    if (stopped) {
+        emit processingStepChanged("Stopped");
+        on_finish();
+        return;
     }
 
+    timer->start(interval);
     if (waiting_for_reply) return;
-
-    QUrl url("http://api.forismatic.com/api/1.0/");
+    emit processingStepChanged("Requesting quote server");
+    QUrl url(quoteServerName);
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QObject::connect(manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(replyFinished(QNetworkReply *)));
     QNetworkRequest request(url);
@@ -40,6 +45,7 @@ void QuotesWorker::run() {
 
     manager->post(request, data);
     waiting_for_reply = true;
+    emit processingStepChanged("Waiting for quotes server reply");
 }
 
 void QuotesWorker::replyFinished(QNetworkReply *reply) {
@@ -58,13 +64,12 @@ void QuotesWorker::replyFinished(QNetworkReply *reply) {
 }
 
 void QuotesWorker::command(QString command) {
-    QStringList command_parts = command.split(" ", QString::SkipEmptyParts);
+    QStringList commandParts = command.split(" ", QString::SkipEmptyParts);
 
-    QTextStream out(stdout);
-    if (command_parts.size() != 2 || command_parts.at(0) != "interval") return;
+    if (commandParts.size() != 2 || commandParts.at(0) != "interval") return;
 
     bool ok;
-    int interval = command_parts.at(1).toInt(&ok);
+    int interval = commandParts.at(1).toInt(&ok);
     if (!ok || interval < 1000) {
         emit message(QString("[QuotesWorker]: Interval %1 is too small").arg(interval));
         return;
