@@ -1,5 +1,5 @@
-set(SOURCES main.cpp Worker.cpp Cli.cpp WorkerManager.cpp QuotesWorker.cpp ConsoleReader.cpp)
-set(HEADERS Worker.h Cli.h WorkerManager.h QuotesWorker.h ConsoleReader.h)
+set(SOURCES main.cpp Worker.cpp Cli.cpp WorkerManager.cpp QuotesWorker.cpp ConsoleReader.cpp FractalWorker.cpp)
+set(HEADERS Worker.h Cli.h WorkerManager.h QuotesWorker.h ConsoleReader.h FractalWorker.h)
 
 # Tell CMake to run moc when necessary:
 set(CMAKE_AUTOMOC ON)

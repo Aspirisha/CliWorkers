@@ -1,4 +1,5 @@
 #include <QThread>
+#include <QTextStream>
 #include "WorkerManager.h"
 
 WorkerManager::WorkerDescriptor::WorkerDescriptor(Worker *w, Worker::State state)
@@ -13,6 +14,12 @@ WorkerManager::WorkerManager(const QVector<Worker*> &workers) {
         Worker *w = workers[id - 1];
         connect(w, &Worker::message, [this, id](QString msg) {
             emit this->message(id, msg);
+        });
+
+        connect(w, &Worker::error, [this, id](QString msg) {
+            QTextStream out(stdout);
+            out << "ffff" << endl;
+            emit this->error(id, msg);
         });
 
         connect(w, &Worker::stateChanged, [this, id](Worker::State newState) {

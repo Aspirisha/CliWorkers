@@ -8,7 +8,7 @@ class Cli : public QObject
 {
     Q_OBJECT
 public:
-    Cli(QObject *parent = 0);
+    Cli(int threadsNum, QObject *parent = 0);
 public slots :
     void run();
     void onMessage(int id, QString msg);
@@ -16,6 +16,8 @@ private slots:
     void processUserInput(QString line);
     void exitRequest();
     void printStatus(QStringList status);
+    void workerManagerError(QString msg);
+    void workerError(int id, QString msg);
 signals:
     void finished();
 private:

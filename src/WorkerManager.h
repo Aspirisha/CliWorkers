@@ -31,10 +31,9 @@ public:
     void stopAll();
 signals:
     void error(QString e);
+    void error(int id, QString msg);
     void message(int id, QString msg);
     void statusReply(QStringList) const;
-private slots:
-    
 private:
     QVector<WorkerDescriptor> workers;
 };

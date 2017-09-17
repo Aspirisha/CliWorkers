@@ -6,13 +6,13 @@
 #include <QDomDocument>
 #include <QTextStream>
 #include <Qtimer>
-#include <random>
 #include <chrono>
 #include "QuotesWorker.h"
 
 const QString QuotesWorker::quoteServerName = "http://api.forismatic.com/api/1.0/";
 
-QuotesWorker::QuotesWorker(int request_interval_millis) : interval(request_interval_millis){
+QuotesWorker::QuotesWorker(int request_interval_millis) : interval(request_interval_millis), 
+    randomGen(std::chrono::system_clock::now().time_since_epoch().count()){
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &QuotesWorker::run);
 }
@@ -35,11 +35,10 @@ void QuotesWorker::run() {
     QUrlQuery params;
     params.addQueryItem("method", "getQuote");
     params.addQueryItem("lang", "en");
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::default_random_engine generator(seed);
+    
+    
     std::uniform_int_distribution<int> distribution(1, 100000);
-    int dice_roll = distribution(generator);  // generates number in the range 1..6 
-    params.addQueryItem("key", QString::number(distribution(generator)));
+    params.addQueryItem("key", QString::number(distribution(randomGen)));
 
     QByteArray data = params.query(QUrl::FullyEncoded).toUtf8();
 

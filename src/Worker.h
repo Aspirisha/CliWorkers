@@ -28,8 +28,9 @@ public slots:
     void start();
     void pause(); 
     void stop();
-    virtual void run() = 0;
     virtual void command(QString command);
+protected slots:
+    virtual void run() = 0;
 protected:
     void on_finish();
     QWaitCondition resume_condition;

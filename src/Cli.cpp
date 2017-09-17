@@ -2,14 +2,34 @@
 #include "WorkerManager.h"
 #include "ConsoleReader.h"
 #include "QuotesWorker.h"
+#include "FractalWorker.h"
 #include "Cli.h"
 
-Cli::Cli(QObject *parent) : QObject(parent) {
-    worker_manager = new WorkerManager({new QuotesWorker});
+Cli::Cli(int threadsNum, QObject *parent) : QObject(parent) {
+    QVector<Worker*> workers;
+    for (int i = 0; i < threadsNum; i++) {
+        switch (i % 2) {
+        case 0: {
+            workers.push_back(new QuotesWorker);
+            break;
+        }
+        case 1: {
+            QString filepath = FractalWorker::defaultPath + QDir::separator() + QString("fractal-%1").arg(i + 1);
+            workers.push_back(new FractalWorker(filepath));
+            break;
+        }
+        }
+    }
+
+    worker_manager = new WorkerManager(workers);
     console_reader = new ConsoleReader;
     reader_thread = new QThread;
     connect(worker_manager, &WorkerManager::message, this, &Cli::onMessage);
     connect(worker_manager, &WorkerManager::statusReply, this, &Cli::printStatus);
+    connect(worker_manager, static_cast<void (WorkerManager::*)(QString)>(&WorkerManager::error),
+        this, &Cli::workerManagerError);
+    connect(worker_manager, static_cast<void (WorkerManager::*)(int, QString)>(&WorkerManager::error),
+        this, &Cli::workerError);
     connect(console_reader, &ConsoleReader::exitRequest, this, &Cli::exitRequest);
     connect(console_reader, &ConsoleReader::gotLine, this, &Cli::processUserInput);
 
@@ -77,4 +97,14 @@ void Cli::printStatus(QStringList status) {
     for (QString s : status) {
         cout << s << endl;
     }
+}
+
+void Cli::workerManagerError(QString msg) {
+    QTextStream cout(stdout);
+    cout << "[ERROR] " << msg << endl;
+}
+
+void Cli::workerError(int id, QString msg) {
+    QTextStream cout(stdout);
+    cout << QString("[ERROR in thread-%1] ").arg(id) << msg << endl;
 }
