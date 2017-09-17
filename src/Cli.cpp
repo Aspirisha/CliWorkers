@@ -37,7 +37,7 @@ void Cli::processUserInput(QString command) {
         }
 
         if (regex.cap(1) == "command") {
-            worker_manager->command(id, command.right(regex.matchedLength()));
+            worker_manager->command(id, command.mid(regex.cap(0).length()));
         } else if (regex.cap(1) == "pause") {
             worker_manager->pause(id);
         } else if (regex.cap(1) == "resume") {
