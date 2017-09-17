@@ -59,5 +59,7 @@ void Cli::exitRequest() {
     QTextStream cout(stdout);
     cout << "Good bye!" << endl;
     worker_manager->stopAll();
+    reader_thread->quit();
+    reader_thread->wait();
     emit finished();
 }

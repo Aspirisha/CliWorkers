@@ -45,7 +45,13 @@ void WorkerManager::start() {
 }
 
 void WorkerManager::stopAll() {
-    // TODO
+    for (QThread *t : worker_threads) {
+        t->quit();
+        t->wait(1000); 
+        if (!t->isFinished()) {
+            t->terminate();
+        }
+    }
 }
 
 void WorkerManager::command(int id, QString command) {
